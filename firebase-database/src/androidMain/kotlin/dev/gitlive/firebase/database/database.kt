@@ -32,9 +32,9 @@ internal inline fun <reified T> encode(value: T, shouldEncodeElementDefault: Boo
 internal fun <T> encode(strategy: SerializationStrategy<T> , value: T, shouldEncodeElementDefault: Boolean): Any? =
     dev.gitlive.firebase.encode(strategy, value, shouldEncodeElementDefault, ServerValue.TIMESTAMP)
 
-suspend fun <T> Task<T>.awaitWhileOnline(): T = coroutineScope {
+suspend fun <T> Task<T>.awaitWhileOnline(database: com.google.firebase.database.FirebaseDatabase): T = coroutineScope {
 
-    val notConnected = Firebase.database
+    val notConnected = FirebaseDatabase(database)
         .reference(".info/connected")
         .valueEvents
         .filter { !it.value<Boolean>() }
@@ -166,25 +166,25 @@ actual class DatabaseReference internal constructor(
     actual fun child(path: String) = DatabaseReference(android.child(path), persistenceEnabled)
 
     actual fun push() = DatabaseReference(android.push(), persistenceEnabled)
-    actual fun onDisconnect() = OnDisconnect(android.onDisconnect(), persistenceEnabled)
+    actual fun onDisconnect() = OnDisconnect(android.onDisconnect(), persistenceEnabled, android.database)
 
     actual suspend inline fun <reified T> setValue(value: T?, encodeDefaults: Boolean) = android.setValue(encode(value, encodeDefaults))
-        .run { if(persistenceEnabled) await() else awaitWhileOnline() }
+        .run { if(persistenceEnabled) await() else awaitWhileOnline(android.database) }
         .run { Unit }
 
     actual suspend fun <T> setValue(strategy: SerializationStrategy<T>, value: T, encodeDefaults: Boolean) =
         android.setValue(encode(strategy, value, encodeDefaults))
-            .run { if(persistenceEnabled) await() else awaitWhileOnline() }
+            .run { if(persistenceEnabled) await() else awaitWhileOnline(android.database) }
             .run { Unit }
 
     @Suppress("UNCHECKED_CAST")
     actual suspend fun updateChildren(update: Map<String, Any?>, encodeDefaults: Boolean) =
         android.updateChildren(encode(update, encodeDefaults) as Map<String, Any?>)
-            .run { if(persistenceEnabled) await() else awaitWhileOnline() }
+            .run { if(persistenceEnabled) await() else awaitWhileOnline(android.database) }
             .run { Unit }
 
     actual suspend fun removeValue() = android.removeValue()
-        .run { if(persistenceEnabled) await() else awaitWhileOnline() }
+        .run { if(persistenceEnabled) await() else awaitWhileOnline(android.database) }
         .run { Unit }
 }
 
@@ -212,31 +212,32 @@ actual class DataSnapshot internal constructor(
 
 actual class OnDisconnect internal constructor(
     val android: com.google.firebase.database.OnDisconnect,
-    val persistenceEnabled: Boolean
+    val persistenceEnabled: Boolean,
+    val database: com.google.firebase.database.FirebaseDatabase
 ) {
 
     actual suspend fun removeValue() = android.removeValue()
-        .run { if(persistenceEnabled) await() else awaitWhileOnline() }
-        .run { Unit }
+        .run { if(persistenceEnabled) await() else awaitWhileOnline(database) }
+        .run { }
 
     actual suspend fun cancel() = android.cancel()
-        .run { if(persistenceEnabled) await() else awaitWhileOnline() }
-        .run { Unit }
+        .run { if(persistenceEnabled) await() else awaitWhileOnline(database) }
+        .run { }
 
     actual suspend inline fun <reified T> setValue(value: T, encodeDefaults: Boolean) =
         android.setValue(encode(value, encodeDefaults))
-            .run { if(persistenceEnabled) await() else awaitWhileOnline() }
-            .run { Unit }
+            .run { if(persistenceEnabled) await() else awaitWhileOnline(database) }
+            .run { }
 
     actual suspend fun <T> setValue(strategy: SerializationStrategy<T>, value: T, encodeDefaults: Boolean) =
         android.setValue(encode(strategy, value, encodeDefaults))
-            .run { if(persistenceEnabled) await() else awaitWhileOnline() }
-            .run { Unit}
+            .run { if(persistenceEnabled) await() else awaitWhileOnline(database) }
+            .run { }
 
     actual suspend fun updateChildren(update: Map<String, Any?>, encodeDefaults: Boolean) =
         android.updateChildren(update.mapValues { (_, it) -> encode(it, encodeDefaults) })
-            .run { if(persistenceEnabled) await() else awaitWhileOnline() }
-            .run { Unit }
+            .run { if(persistenceEnabled) await() else awaitWhileOnline(database) }
+            .run { }
 }
 
 actual typealias DatabaseException = com.google.firebase.database.DatabaseException

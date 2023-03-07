@@ -60,7 +60,7 @@ subprojects {
     }
 
     tasks.withType<Sign>().configureEach {
-        onlyIf { !project.gradle.startParameter.taskNames.contains("publishToMavenLocal") && !project.gradle.startParameter.taskNames.contains("publishToGitHubPackagesRepository") }
+        onlyIf { !project.gradle.startParameter.taskNames.any { "MavenLocal" in it } && !project.gradle.startParameter.taskNames.contains("publishToGitHubPackagesRepository") }
     }
 
     tasks.whenTaskAdded {
@@ -208,7 +208,7 @@ subprojects {
         }
 
         dependencies {
-            "jvmMainApi"("dev.gitlive:firebase-java-sdk:1.0.14")
+            "jvmMainApi"("dev.gitlive:firebase-java-sdk:1.0.15")
             "jvmMainApi"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0") {
                 exclude("com.google.android.gms")
             }
@@ -295,4 +295,8 @@ subprojects {
             }
         }
     }
+}
+
+rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
+    rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion = "16.0.0"
 }

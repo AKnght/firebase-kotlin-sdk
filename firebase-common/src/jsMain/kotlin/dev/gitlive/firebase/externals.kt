@@ -324,8 +324,9 @@ external object firebase {
         open class DataSnapshot {
             val key: String?
             val ref: Reference
-            fun `val`(): Any
+            fun `val`(): Any?
             fun exists(): Boolean
+            fun hasChildren(): Boolean
             fun forEach(action: (a: DataSnapshot) -> Boolean): Boolean
             fun numChildren(): Int
             fun child(path: String): DataSnapshot

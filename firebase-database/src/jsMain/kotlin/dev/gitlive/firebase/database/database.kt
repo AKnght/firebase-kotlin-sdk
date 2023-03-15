@@ -140,6 +140,11 @@ actual class DataSnapshot internal constructor(
     val database: firebase.database.Database
 ) {
 
+    actual val value get(): Any? {
+        check(!hasChildren) { "DataSnapshot.value can only be used for primitive values (snapshots without children)" }
+        return js.`val`()
+    }
+
     actual inline fun <reified T> value() =
         rethrow { decode<T>(value = js.`val`()) }
 
@@ -149,7 +154,7 @@ actual class DataSnapshot internal constructor(
     actual val exists get() = rethrow { js.exists() }
     actual val key get() = rethrow { js.key }
     actual fun child(path: String) = DataSnapshot(js.child(path), database)
-
+    actual val hasChildren get() = js.hasChildren()
     actual val children: Iterable<DataSnapshot> = rethrow {
         ArrayList<DataSnapshot>(js.numChildren()).also {
             js.forEach { snapshot -> it.add(DataSnapshot(snapshot, database)) }

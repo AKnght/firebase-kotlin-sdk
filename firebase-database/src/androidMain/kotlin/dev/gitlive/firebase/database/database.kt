@@ -200,6 +200,8 @@ actual class DataSnapshot internal constructor(
 
     actual val ref: DatabaseReference get() = DatabaseReference(android.ref, persistenceEnabled)
 
+    actual val value get() = android.value
+
     actual inline fun <reified T> value() =
         decode<T>(value = android.value)
 
@@ -207,6 +209,7 @@ actual class DataSnapshot internal constructor(
         decode(strategy, android.value)
 
     actual fun child(path: String) = DataSnapshot(android.child(path), persistenceEnabled)
+    actual val hasChildren get() = android.hasChildren()
     actual val children: Iterable<DataSnapshot> get() = android.children.map { DataSnapshot(it, persistenceEnabled) }
 }
 
